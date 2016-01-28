@@ -1,0 +1,75 @@
+# container.dkm
+
+## INFO
+# Mandatory Environment Variables
+# - REGISTRY_REMOTE
+# - NAMESPACE
+# - CONTAINER
+# - TAG
+# - REGISTRY_LOCAL
+# - PATH_LOCAL
+
+## VARIABLES
+# Dynamic
+CONTAINER_NAME=${NAMESPACE}_${CONTAINER}
+CONTAINER_PATH=${PATH_LOCAL}/${CONTAINER_NAME}
+IMAGE_REMOTE=${REGISTRY_REMOTE}/${NAMESPACE}/${CONTAINER}:${TAG}
+IMAGE_LOCAL=${REGISTRY_LOCAL}/${CONTAINER}:${TAG}
+
+## GOALS
+all: install run
+
+install: pull tag push
+
+remove: clean uninstall
+
+restart: stop start
+
+# Images
+pull:
+	@docker pull ${IMAGE_REMOTE}
+
+tag:
+	@docker tag -f ${IMAGE_REMOTE} ${IMAGE_LOCAL}
+
+push:
+	@docker push ${IMAGE_LOCAL}
+
+# Container
+stats:
+	@docker stats ${CONTAINER_NAME}
+
+port:
+	@docker port ${CONTAINER_NAME}
+
+bash: start
+	@docker exec -it ${CONTAINER_NAME} /bin/bash
+
+inspect:
+	@docker inspect ${CONTAINER_NAME}
+
+start:
+	@docker start ${CONTAINER_NAME}
+
+stop:
+	@docker stop ${CONTAINER_NAME}
+
+clean: stop
+	@docker rm ${CONTAINER_NAME}
+
+create-path:
+	@mkdir -p ${CONTAINER_PATH}/data
+	@mkdir -p ${CONTAINER_PATH}/logs
+	@mkdir -p ${CONTAINER_PATH}/backup
+	@mkdir -p ${CONTAINER_PATH}/etc
+
+run: create-path
+	@docker run --detach \
+    --publish 52081:8081 \
+    --name ${CONTAINER_NAME} \
+    --restart always \
+    --volume ${CONTAINER_PATH}/data:${CONTAINER_HOME}/data \
+    --volume ${CONTAINER_PATH}/logs:${CONTAINER_HOME}/logs \
+    --volume ${CONTAINER_PATH}/backup:${CONTAINER_HOME}/backup \
+    --volume ${CONTAINER_PATH}/etc:${CONTAINER_HOME}/etc \
+    ${IMAGE_LOCAL}

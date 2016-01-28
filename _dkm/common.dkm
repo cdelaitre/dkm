@@ -1,0 +1,8 @@
+# common.dkm
+ 
+## GOALS
+ps:
+	@docker ps
+
+psa:
+	@docker ps -a
