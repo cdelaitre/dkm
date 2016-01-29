@@ -5,6 +5,8 @@
 # - REGISTRY_REMOTE
 # - NAMESPACE
 # - CONTAINER
+# - CONTAINER_PORT
+# - CONTAINER_VOLUMES
 # - TAG
 # - REGISTRY_LOCAL
 # - PATH_LOCAL
@@ -49,6 +51,7 @@ inspect:
 	@docker inspect ${CONTAINER_NAME}
 
 start:
+	$(info ************ start ${CONTAINER_NAME} ************)
 	@docker start ${CONTAINER_NAME}
 
 stop:
@@ -58,18 +61,26 @@ clean: stop
 	@docker rm ${CONTAINER_NAME}
 
 create-path:
-	@mkdir -p ${CONTAINER_PATH}/data
-	@mkdir -p ${CONTAINER_PATH}/logs
-	@mkdir -p ${CONTAINER_PATH}/backup
-	@mkdir -p ${CONTAINER_PATH}/etc
+	@for VOLUME in ${CONTAINER_VOLUMES} ; do \
+		mkdir -p ${CONTAINER_PATH}/$$VOLUME ; \
+	done
 
 run: create-path
-	@docker run --detach \
-    --publish 52081:8081 \
+	docker run --detach \
+    --publish ${CONTAINER_PORT} \
     --name ${CONTAINER_NAME} \
     --restart always \
-    --volume ${CONTAINER_PATH}/data:${CONTAINER_HOME}/data \
-    --volume ${CONTAINER_PATH}/logs:${CONTAINER_HOME}/logs \
-    --volume ${CONTAINER_PATH}/backup:${CONTAINER_HOME}/backup \
-    --volume ${CONTAINER_PATH}/etc:${CONTAINER_HOME}/etc \
+    ${DOCKER_VOLUMES} \
     ${IMAGE_LOCAL}
+
+test:
+	VOLUMES=""
+	@for VOLUME in vol1 vol2 vol3 ; do \
+		VOLUMES=$$VOLUMES" --volume ${CONTAINER_PATH}/"$$VOLUME":${CONTAINER_HOME}/"$$VOLUME ; \
+	done
+
+#    --volume ${CONTAINER_PATH}/data:${CONTAINER_HOME}/data \
+#    --volume ${CONTAINER_PATH}/logs:${CONTAINER_HOME}/logs \
+#    --volume ${CONTAINER_PATH}/backup:${CONTAINER_HOME}/backup \
+#    --volume ${CONTAINER_PATH}/etc:${CONTAINER_HOME}/etc \
+

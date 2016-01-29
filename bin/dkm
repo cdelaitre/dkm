@@ -1,2 +1,6 @@
 #!/bin/bash
-make -r $@
+MAKEFILE=Makefile
+if [[ ! -f ${MAKEFILE} ]]; then
+	MAKEFILE=${DKM_HOME}/Makefile
+fi
+make -r -f ${MAKEFILE} $@
